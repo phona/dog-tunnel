@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/xtaci/kcp-go"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -556,12 +557,13 @@ func main() {
 			}
 			remoteConn = net.Conn(_remoteConn)
 		} else {
-			_remoteConn, err := net.DialTimeout("tcp", *serverAddr, 10*time.Second)
+			_remoteConn, err := kcp.Dial(*serverAddr)
 			if err != nil {
 				println("connect remote err:" + err.Error())
 				return false
 			}
 			remoteConn = _remoteConn
+			println("create udp connection")
 		}
 		println("connect to server succeed")
 		go connect()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"dog-tunnel/common"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,9 +15,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/xtaci/kcp-go"
+
 	"github.com/vzex/dog-tunnel/admin"
 	"github.com/vzex/dog-tunnel/auth"
-	"github.com/vzex/dog-tunnel/common"
 )
 
 var listenAddr = flag.String("addr", "0.0.0.0:8000", "server addr")
@@ -87,7 +89,7 @@ func udphandleClient(conn *net.UDPConn) {
 }
 
 func handleResponse(conn net.Conn, id string, action string, content string) {
-	//log.Println("got", id, action, content)
+	log.Println("got", id, action, content)
 	common.GetClientInfoByConn(conn, func(client *common.ClientInfo) {
 		client.ResponseTime = time.Now().Unix()
 	}, func() {
@@ -130,7 +132,7 @@ func handleResponse(conn net.Conn, id string, action string, content string) {
 				common.Write(conn, "0", "showandquit", "online service num cannot overstep "+strconv.Itoa(user.MaxOnlineServerNum))
 				return
 			}
-			if !user.CheckIpLimit(conn.RemoteAddr().(*net.TCPAddr).IP.String()) {
+			if !user.CheckIpLimit(conn.RemoteAddr().(*net.UDPAddr).IP.String()) {
 				common.Write(conn, "0", "showandquit", "ip limit service num cannot overstep "+strconv.Itoa(user.MaxSameIPServers))
 				return
 			}
@@ -409,7 +411,8 @@ func main() {
 	common.Conn2ClientInfo = make(map[net.Conn]*common.ClientInfo)
 	common.ServerName2Conn = make(map[string]net.Conn)
 	common.Conn2Admin = make(map[net.Conn]*common.AdminInfo)
-	listener, err := net.Listen("tcp", *listenAddr)
+
+	listener, err := kcp.Listen(*listenAddr)
 	if err != nil {
 		log.Println("cannot listen addr:" + err.Error())
 		return

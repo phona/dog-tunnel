@@ -116,7 +116,7 @@ func Read(conn net.Conn, callback ReadCallBack) {
 	for scanner.Scan() {
 	}
 	if scanner.Err() != nil {
-		println(scanner.Err().Error())
+		println("common.Read:> " + scanner.Err().Error())
 	}
 }
 
